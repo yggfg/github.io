@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>共享二次元相册工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, sans-serif;}
+body{
+  background: linear-gradient(160deg, #e6f4ff, #f3e8ff);
+  padding-bottom: 90px;
+  min-height: 100vh;
+}
+.container{max-width:640px;margin:0 auto;padding:16px;}
+.header-box{
+  background:rgba(255,255,255,0.75);
+  border-radius:24px;
+  padding:26px 16px;
+  text-align:center;
+  backdrop-filter: blur(10px);
+  box-shadow:0 4px 16px #d8e8fc;
+  margin-bottom:20px;
+}
+.header-box h1{
+  color:#6d7eff;
+  font-size:24px;
+  margin-bottom:6px;
+}
+.header-box p{
+  color:#8898e0;
+  font-size:14px;
+}
+.card{
+  background:#ffffff;
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:20px;
+  box-shadow:0 3px 12px #e0e9f8;
+}
+.card h3{
+  color:#5c6ee0;
+  margin-bottom:14px;
+  font-size:18px;
+}
+/* 页面切换控制 */
+.page{display:none;}
+.page.active{display:block;}
+/* 底部导航栏 */
+.bottom-nav{
+  position:fixed;
+  left:0;
+  bottom:0;
+  width:100%;
+  max-width:640px;
+  margin:0 auto;
+  background:#fff;
+  display:flex;
+  border-radius:24px 24px 0 0;
+  box-shadow:0 -3px 12px #dde6f8;
+}
+.nav-item{
+  flex:1;
+  text-align:center;
+  padding:12px 4px;
+  color:#b0b8d0;
+  font-size:13px;
+}
+.nav-item.active{color:#6d7eff;}
+
+/* 相册网格 */
+.album-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  margin:15px 0;
+}
+.album-item{
+  border-radius:14px;
+  overflow:hidden;
+  aspect-ratio: 1 / 1;
+  background:#eee;
+}
+.album-item img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+/* 上传区域 */
+.upload-area{
+  border:2px dashed #6d7eff;
+  border-radius:14px;
+  padding:20px;
+  text-align:center;
+  color:#6d7eff;
+  margin-bottom:12px;
+}
+#file-input{display:none;}
+.btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  background:#6d7eff;
+  color:#fff;
+  font-size:15px;
+  margin:6px 0;
+}
+.btn.gray{background:#c6cfe8;color:#444;}
+.btn.red{background:#ff6b81;}
+
+textarea,input{
+  width:100%;
+  border:1px solid #d0dbf7;
+  border-radius:14px;
+  padding:12px;
+  outline:none;
+  font-size:15px;
+  background:#f5f9ff;
+}
+textarea{min-height:140px;margin-bottom:10px;}
+
+/* 日历 */
+.cal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.cal-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
+.cal-day{
+  text-align:center;
+  padding:9px 0;
+  border-radius:10px;
+  background:#f0f5ff;
+  font-size:14px;
+}
+.cal-day.today{background:#6d7eff;color:#fff;}
+
+/* 七日打卡 */
+.check-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:7px;
+  margin:15px 0;
+}
+.check-item{
+  text-align:center;
+  padding:14px 0;
+  border-radius:12px;
+  background:#f0f5ff;
+}
+.check-item.checked{background:#6d7eff;color:#fff;}
+
+/* 待办清单 */
+.todo-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid #e1e9fc;
+}
+.del-btn{
+  margin-left:auto;
+  border:none;
+  background:#ff7b9c;
+  color:white;
+  border-radius:8px;
+  padding:4px 8px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-box">
+    <h1>共享二次元相册工具箱</h1>
+    <p>图片上传 · 共享相册 | 日历 | 打卡 | 备忘录 | 待办</p>
+  </div>
+
+  <!-- 页面1：共享相册+图片上传 -->
+  <div id="page1" class="page active">
+    <div class="card">
+      <h3>🖼 共享动漫相册（可上传图片）</h3>
+      <!-- 上传区域 -->
+      <div class="upload-area" onclick="document.getElementById('file-input').click()">
+        <p>点击此处上传图片到相册</p>
+        <input type="file" id="file-input" accept="image/*" multiple>
+      </div>
+      <button class="btn red" onclick="clearAllUploadImg()">清空所有上传图片</button>
+      <!-- 相册网格 -->
+      <div class="album-grid" id="albumContainer">
+        <!-- 内置默认图片 -->
+        <div class="album-item"><img src="p1.jpg"></div>
+        <div class="album-item"><img src="p2.jpg"></div>
+        <div class="album-item"><img src="p3.jpg"></div>
+        <div class="album-item"><img src="p4.jpg"></div>
+        <div class="album-item"><img src="p5.jpg"></div>
+        <div class="album-item"><img src="p6.jpg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页面2：当月日历 -->
+  <div id="page2" class="page">
+    <div class="card">
+      <h3>📅 日历</h3>
+      <div class="cal-head">
+        <span id="calTitle"></span>
+      </div>
+      <div class="cal-grid" id="calBox"></div>
+    </div>
+  </div>
+
+  <!-- 页面3：七日打卡 -->
+  <div id="page3" class="page">
+    <div class="card">
+      <h3>✅ 每周打卡</h3>
+      <div class="check-grid" id="checkBox">
+        <div class="check-item" onclick="toggleCheck(this)">一</div>
+        <div class="check-item" onclick="toggleCheck(this)">二</div>
+        <div class="check-item" onclick="toggleCheck(this)">三</div>
+        <div class="check-item" onclick="toggleCheck(this)">四</div>
+        <div class="check-item" onclick="toggleCheck(this)">五</div>
+        <div class="check-item" onclick="toggleCheck(this)">六</div>
+        <div class="check-item" onclick="toggleCheck(this)">日</div>
+      </div>
+      <button class="btn gray" onclick="clearCheck()">清空打卡记录</button>
+    </div>
+  </div>
+
+  <!-- 页面4：备忘录 -->
+  <div id="page4" class="page">
+    <div class="card">
+      <h3>📝 备忘录</h3>
+      <textarea id="noteInput" placeholder="记录番剧观后感、语录、计划..."></textarea>
+      <button class="btn" onclick="saveNote()">保存笔记</button>
+      <button class="btn gray" onclick="clearNote()">清空内容</button>
+    </div>
+  </div>
+
+  <!-- 页面5：待办清单 -->
+  <div id="page5" class="page">
+    <div class="card">
+      <h3>📋 追番/日常待办</h3>
+      <input id="todoInput" placeholder="输入任务，例：新番更新、动漫周边">
+      <button class="btn" onclick="addTodo()">添加任务</button>
+      <div id="todoList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部5栏导航 -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab(1,this)">相册</div>
+  <div class="nav-item" onclick="switchTab(2,this)">日历</div>
+  <div class="nav-item" onclick="switchTab(3,this)">打卡</div>
+  <div class="nav-item" onclick="switchTab(4,this)">备忘录</div>
+  <div class="nav-item" onclick="switchTab(5,this)">待办</div>
+</div>
+
+<script>
+// 页面切换
+function switchTab(num, tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page'+num).classList.add('active');
+  tab.classList.add('active');
+}
+
+// 全局存储上传图片
+let uploadImages = JSON.parse(localStorage.getItem('uploadImgList') || '[]');
+const albumBox = document.getElementById('albumContainer');
+const fileInput = document.getElementById('file-input');
+
+// 页面加载初始化
+window.onload = ()=>{
+  loadNote();
+  renderCalendar();
+  loadCheckData();
+  renderTodo();
+  renderUploadImages();
+}
+
+// ========== 图片上传核心功能 ==========
+fileInput.addEventListener('change',function(e){
+  const files = e.target.files;
+  if(!files.length) return;
+  for(let file of files){
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      uploadImages.push(ev.target.result);
+      localStorage.setItem('uploadImgList',JSON.stringify(uploadImages));
+      renderUploadImages();
+    }
+    reader.readAsDataURL(file);
+  }
+  fileInput.value = '';
+})
+// 渲染上传的图片
+function renderUploadImages(){
+  // 保留默认6张图，追加上传图片
+  const defaultHtml = `
+    <div class="album-item"><img src="p1.jpg"></div>
+    <div class="album-item"><img src="p2.jpg"></div>
+    <div class="album-item"><img src="p3.jpg"></div>
+    <div class="album-item"><img src="p4.jpg"></div>
+    <div class="album-item"><img src="p5.jpg"></div>
+    <div class="album-item"><img src="p6.jpg"></div>
+  `;
+  let addHtml = '';
+  uploadImages.forEach(src=>{
+    addHtml += `<div class="album-item"><img src="${src}"></div>`;
+  })
+  albumBox.innerHTML = defaultHtml + addHtml;
+}
+// 清空上传图片
+function clearAllUploadImg(){
+  uploadImages = [];
+  localStorage.removeItem('uploadImgList');
+  renderUploadImages();
+  alert('已清空所有上传图片');
+}
+
+// ========== 备忘录功能 ==========
+const noteInput = document.getElementById('noteInput');
+function loadNote(){
+  const saveText = localStorage.getItem('localNote');
+  if(saveText) noteInput.value = saveText;
+}
+function saveNote(){
+  localStorage.setItem('localNote', noteInput.value);
+  alert('备忘录保存成功！');
+}
+function clearNote(){
+  noteInput.value = '';
+  localStorage.removeItem('localNote');
+}
+
+// ========== 七日打卡存储 ==========
+function toggleCheck(el){
+  el.classList.toggle('checked');
+  saveCheckData();
+}
+function saveCheckData(){
+  let arr = [];
+  document.querySelectorAll('.check-item').forEach(item=>{
+    arr.push(item.classList.contains('checked'));
+  })
+  localStorage.setItem('checkData', JSON.stringify(arr));
+}
+function loadCheckData(){
+  const data = localStorage.getItem('checkData');
+  if(!data) return;
+  const list = JSON.parse(data);
+  const items = document.querySelectorAll('.check-item');
+  list.forEach((v,i)=>{
+    if(v) items[i].classList.add('checked');
+  })
+}
+function clearCheck(){
+  document.querySelectorAll('.check-item').forEach(i=>i.classList.remove('checked'));
+  localStorage.removeItem('checkData');
+}
+
+// ========== 当月日历渲染 ==========
+function renderCalendar(){
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+  document.getElementById('calTitle').innerText = year+'年'+(month+1)+'月';
+  const box = document.getElementById('calBox');
+  box.innerHTML = '';
+  const dayMax = new Date(year, month+1, 0).getDate();
+  for(let i=1;i<=dayMax;i++){
+    const div = document.createElement('div');
+    div.className = 'cal-day';
+    div.innerText = i;
+    if(i === today) div.classList.add('today');
+    box.appendChild(div);
+  }
+}
+
+// ========== 待办清单 ==========
+function addTodo(){
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if(!text) return alert('请输入任务内容');
+  let todoArr = JSON.parse(localStorage.getItem('todoList') || '[]');
+  todoArr.push(text);
+  localStorage.setItem('todoList', JSON.stringify(todoArr));
+  input.value = '';
+  renderTodo();
+}
+function renderTodo(){
+  const listBox = document.getElementById('todoList');
+  listBox.innerHTML = '';
+  const todoArr = JSON.parse(localStorage.getItem('todoList') || '[]');
+  todoArr.forEach((item, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'todo-item';
+    div.innerHTML = `
+      <span>${item}</span>
+      <button class="del-btn" onclick="delTodo(${idx})">删除</button>
+    `;
+    listBox.appendChild(div);
+  })
+}
+function delTodo(index){
+  let arr = JSON.parse(localStorage.getItem('todoList'));
+  arr.splice(index,1);
+  localStorage.setItem('todoList', JSON.stringify(arr));
+  renderTodo();
+}
+</script>
+</body>
+</html>
