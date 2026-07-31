@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二次元记事本</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif;}
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#e0c3fc 0%,#8ec5fc 100%);
+  padding:16px;
+}
+.container{
+  max-width:900px;
+  margin:0 auto;
+}
+.header{
+  backdrop-filter:blur(12px);
+  background:rgba(255,255,255,0.25);
+  border-radius:18px;
+  padding:20px;
+  border:1px solid rgba(255,255,255,0.4);
+  margin-bottom:16px;
+  text-align:center;
+}
+.header h1{
+  color:#442863;
+  font-size:26px;
+}
+.tab-wrap{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.tab-btn{
+  flex:1;
+  min-width:100px;
+  border:none;
+  padding:12px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.35);
+  backdrop-filter:blur(8px);
+  font-size:15px;
+  color:#333;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.45);
+  transition:0.25s;
+}
+.tab-btn.active{
+  background:#9b6bcc;
+  color:white;
+}
+.tab-btn:hover{transform:translateY(-2px);}
+.panel{
+  backdrop-filter:blur(12px);
+  background:rgba(255,255,255,0.28);
+  border-radius:18px;
+  padding:22px;
+  border:1px solid rgba(255,255,255,0.45);
+  display:none;
+}
+.panel.show{display:block;}
+textarea,input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  outline:none;
+  font-size:15px;
+  background:rgba(255,255,255,0.75);
+  margin:8px 0 14px;
+}
+.btn{
+  padding:10px 18px;
+  border:none;
+  border-radius:10px;
+  background:#9b6bcc;
+  color:white;
+  cursor:pointer;
+  font-size:14px;
+}
+.btn:hover{opacity:0.85;}
+.item{
+  background:rgba(255,255,255,0.55);
+  padding:12px;
+  border-radius:10px;
+  margin:8px 0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.calendar-box{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+  margin-top:12px;
+}
+.day{
+  text-align:center;
+  padding:8px 4px;
+  border-radius:8px;
+  background:rgba(255,255,255,0.4);
+  font-size:14px;
+}
+.day.checkin{background:#b888e2;color:white;}
+.del{
+  background:#ee7777;
+  border:none;
+  color:white;
+  padding:4px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>✨二次元记事小站✨</h1>
+    <div style="margin-top:8px;font-size:14px;color:#55406b">备忘录｜打卡日历｜待办清单｜个人日志</div>
+  </div>
+
+  <div class="tab-wrap">
+    <button class="tab-btn active" data-tab="tab1">📝备忘录</button>
+    <button class="tab-btn" data-tab="tab2">📅打卡日历</button>
+    <button class="tab-btn" data-tab="tab3">✅待办清单</button>
+    <button class="tab-btn" data-tab="tab4">📖个人日志</button>
+  </div>
+
+  <!--备忘录-->
+  <div id="tab1" class="panel show">
+    <h3>备忘录</h3>
+    <textarea id="memo" rows="8" placeholder="在这里写下你的想法、灵感、番剧记录..."></textarea>
+    <button class="btn" onclick="saveMemo()">保存备忘录</button>
+  </div>
+
+  <!--打卡日历-->
+  <div id="tab2" class="panel">
+    <h3>每日打卡</h3>
+    <p style="margin:8px 0">点击日期完成打卡，记录追番/学习</p>
+    <div class="calendar-box" id="calendar"></div>
+  </div>
+
+  <!--待办清单-->
+  <div id="tab3" class="panel">
+    <h3>待办清单</h3>
+    <input id="todoInput" placeholder="输入待办事项">
+    <button class="btn" onclick="addTodo()">添加</button>
+    <div id="todoList"></div>
+  </div>
+
+  <!--日志-->
+  <div id="tab4" class="panel">
+    <h3>写日志</h3>
+    <input id="logTitle" placeholder="日志标题">
+    <textarea id="logContent" rows="6" placeholder="写下今天心情，追番感想..."></textarea>
+    <button class="btn" onclick="addLog()">保存日志</button>
+    <div id="logBox"></div>
+  </div>
+</div>
+
+<script>
+//切换标签
+const btns=document.querySelectorAll(".tab-btn");
+const panels=document.querySelectorAll(".panel");
+btns.forEach(b=>{
+  b.onclick=()=>{
+    btns.forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    panels.forEach(p=>p.classList.remove("show"));
+    document.getElementById(b.dataset.tab).classList.add("show");
+  }
+})
+
+//备忘录
+function saveMemo(){
+  const val=document.getElementById("memo").value;
+  localStorage.setItem("memoData",val);
+  alert("备忘录已保存");
+}
+if(localStorage.getItem("memoData")){
+  document.getElementById("memo").value=localStorage.getItem("memoData");
+}
+
+//打卡日历
+const checkinDays=JSON.parse(localStorage.getItem("checkinDays")||"[]");
+function renderCalendar(){
+  const box=document.getElementById("calendar");
+  box.innerHTML="";
+  const now=new Date();
+  const year=now.getFullYear();
+  const month=now.getMonth();
+  const first=new Date(year,month,1);
+  const last=new Date(year,month+1,0);
+  for(let i=0;i<first.getDay();i++){
+    const d=document.createElement("div");d.className="day";d.innerText="";box.appendChild(d);
+  }
+  for(let d=1;d<=last.getDate();d++){
+    const dayEl=document.createElement("div");
+    const dateStr=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    dayEl.innerText=d;
+    dayEl.className="day"+(checkinDays.includes(dateStr)?" checkin":"");
+    dayEl.onclick=()=>{
+      const idx=checkinDays.indexOf(dateStr);
+      if(idx>-1) checkinDays.splice(idx,1);
+      else checkinDays.push(dateStr);
+      localStorage.setItem("checkinDays",JSON.stringify(checkinDays));
+      renderCalendar();
+    }
+    box.appendChild(dayEl);
+  }
+}
+renderCalendar();
+
+//待办
+let todoList=JSON.parse(localStorage.getItem("todoList")||"[]");
+function renderTodo(){
+  const dom=document.getElementById("todoList");dom.innerHTML="";
+  todoList.forEach((item,idx)=>{
+    const div=document.createElement("div");div.className="item";
+    div.innerHTML=`<span>${item}</span><button class="del" onclick="delTodo(${idx})">删除</button>`;
+    dom.appendChild(div);
+  })
+}
+function addTodo(){
+  const v=document.getElementById("todoInput").value.trim();
+  if(!v)return;
+  todoList.push(v);
+  localStorage.setItem("todoList",JSON.stringify(todoList));
+  document.getElementById("todoInput").value="";
+  renderTodo();
+}
+function delTodo(i){
+  todoList.splice(i,1);
+  localStorage.setItem("todoList",JSON.stringify(todoList));
+  renderTodo();
+}
+renderTodo();
+
+//日志
+let logs=JSON.parse(localStorage.getItem("logs")||"[]");
+function renderLog(){
+  const dom=document.getElementById("logBox");dom.innerHTML="";
+  logs.forEach((item,idx)=>{
+    const div=document.createElement("div");div.className="item";
+    div.innerHTML=`<div><strong>${item.title}</strong><br>${item.content}<br><small>${item.time}</small></div>
+    <button class="del" onclick="delLog(${idx})">删除</button>`;
+    dom.appendChild(div);
+  })
+}
+function addLog(){
+  const title=document.getElementById("logTitle").value.trim();
+  const content=document.getElementById("logContent").value.trim();
+  if(!title&&!content)return;
+  logs.push({title,content,time:new Date().toLocaleString()});
+  localStorage.setItem("logs",JSON.stringify(logs));
+  document.getElementById("logTitle").value="";
+  document.getElementById("logContent").value="";
+  renderLog();
+}
+function delLog(i){
+  logs.splice(i,1);
+  localStorage.setItem("logs",JSON.stringify(logs));
+  renderLog();
+}
+renderLog();
+</script>
+</body>
+</html>
